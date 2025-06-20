@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum - FarmConnect</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="logo">
+                    <i class="fas fa-seedling"></i>
+                    <span>FarmConnect</span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="forum.html">Forum</a></li>
+                    <li><a href="mentorship.html">Mentorship</a></li>
+                    <li class="auth-buttons">
+                        <a href="signin.html" class="btn-secondary">Sign In</a>
+                        <a href="signup.html" class="btn-primary">Sign Up</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main style="margin-top: 100px; padding: 20px;">
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1 style="color: var(--primary-green);"><i class="fas fa-comments"></i> Community Forum</h1>
+                <button class="btn-primary" onclick="showNewPostForm()">
+                    <i class="fas fa-plus"></i> New Post
+                </button>
+            </div>
+
+            <!-- New Post Form (Hidden by default) -->
+            <div id="newPostForm" class="post" style="display: none;">
+                <h3 style="color: var(--primary-green); margin-bottom: 1rem;">Create New Post</h3>
+                <form>
+                    <div class="form-group">
+                        <label for="postTitle">Title</label>
+                        <input type="text" id="postTitle" name="postTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="postCategory">Category</label>
+                        <select id="postCategory" name="postCategory" required>
+                            <option value="">Select category</option>
+                            <option value="crops">Crops & Planting</option>
+                            <option value="livestock">Livestock</option>
+                            <option value="equipment">Equipment & Tools</option>
+                            <option value="market">Market & Pricing</option>
+                            <option value="weather">Weather & Climate</option>
+                            <option value="organic">Organic Farming</option>
+                            <option value="general">General Discussion</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="postContent">Content</label>
+                        <textarea id="postContent" name="postContent" rows="5" required></textarea>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" class="btn-primary">Post</button>
+                        <button type="button" class="btn-secondary" onclick="hideNewPostForm()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Forum Categories -->
+            <div class="features-grid" style="margin-bottom: 3rem;">
+                <div class="feature-card">
+                    <i class="fas fa-seedling"></i>
+                    <h3>Crops & Planting</h3>
+                    <p>Discuss seed varieties, planting techniques, and crop management.</p>
+                    <small style="color: #666;">245 posts</small>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-cow"></i>
+                    <h3>Livestock</h3>
+                    <p>Share experiences about animal husbandry and livestock care.</p>
+                    <small style="color: #666;">189 posts</small>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-tools"></i>
+                    <h3>Equipment & Tools</h3>
+                    <p>Reviews and recommendations for farming equipment.</p>
+                    <small style="color: #666;">156 posts</small>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>Market & Pricing</h3>
+                    <p>Market trends, pricing strategies, and selling tips.</p>
+                    <small style="color: #666;">98 posts</small>
+                </div>
+            </div>
+
+            <!-- Recent Posts -->
+            <h2 style="color: var(--primary-green); margin-bottom: 1.5rem;">Recent Discussions</h2>
+            
+            <div class="post">
+                <div class="post-header">
+                    <div class="post-avatar">JD</div>
+                    <div class="post-info">
+                        <h4>John Davis</h4>
+                        <span>Experienced Farmer • 2 hours ago</span>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <h3 style="color: var(--primary-green); margin-bottom: 0.5rem;">Best practices for organic pest control?</h3>
+                    <p>I've been transitioning to organic farming and looking for effective, natural pest control methods. What has worked best for you? I'm particularly dealing with aphids on my tomato plants.</p>
+                </div>
+                <div class="post-actions">
+                    <button class="post-action" onclick="toggleLike(this)">
+                        <i class="fas fa-heart"></i> <span>12</span>
+                    </button>
+                    <button class="post-action">
+                        <i class="fas fa-comment"></i> <span>8</span>
+                    </button>
+                    <button class="post-action">
+                        <i class="fas fa-share"></i> Share
+                    </button>
+                </div>
+            </div>
+
+            <div class="post">
+                <div class="post-header">
+                    <div class="post-avatar">SM</div>
+                    <div class="post-info">
+                        <h4>Sarah Martinez</h4>
+                        <span>Beginner Farmer • 5 hours ago</span>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <h3 style="color: var(--primary-green); margin-bottom: 0.5rem;">First-time farmer seeking advice on soil preparation</h3>
+                    <p>Hi everyone! I just bought my first piece of land and I'm excited to start farming. The soil test results show low nitrogen levels. What's the best way to improve soil fertility naturally?</p>
+                </div>
+                <div class="post-actions">
+                    <button class="post-action" onclick="toggleLike(this)">
+                        <i class="fas fa-heart"></i> <span>24</span>
+                    </button>
+                    <button class="post-action">
+                        <i class="fas fa-comment"></i> <span>15</span>
+                    </button>
+                    <button class="post-action">
+                        <i class="fas fa-share"></i> Share
+                    </button>
+                </div>
+            </div>
+
+            <div class="post">
+                <div class="post-header">
+                    <div class="post-avatar">RB</div>
+                    <div class="post-info">
+                        <h4>Robert Brown</h4>
+                        <span>Experienced Farmer • 1 day ago</span>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <h3 style="color: var(--primary-green); margin-bottom: 0.5rem;">Weather patterns affecting crop yields this season</h3>
+                    <p>Has anyone else noticed unusual weather patterns this growing season? My corn yields are down 15% compared to last year. Wondering if it's just my area or a broader trend.</p>
+                    <img src="/placeholder.svg?height=200&width=400" alt="Corn field affected by weather" style="width: 100%; max-width: 400px; border-radius: 5px; margin-top: 1rem;">
+                </div>
+                <div class="post-actions">
+                    <button class="post-action liked" onclick="toggleLike(this)">
+                        <i class="fas fa-heart"></i> <span>31</span>
+                    </button>
+                    <button class="post-action">
+                        <i class="fas fa-comment"></i> <span>22</span>
+                    </button>
+                    <button class="post-action">
+                        <i class="fas fa-share"></i> Share
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

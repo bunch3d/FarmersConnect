@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - FarmConnect</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="logo">
+                    <i class="fas fa-seedling"></i>
+                    <span>FarmConnect</span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="signin.html" class="btn-secondary">Sign In</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="form-container">
+            <h2><i class="fas fa-user-plus"></i> Join FarmConnect</h2>
+            <form id="signupForm" action="/signup" method="POST">
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" name="fullName" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="farmingExperience">Farming Experience</label>
+                    <select id="farmingExperience" name="farmingExperience" required>
+                        <option value="">Select your experience level</option>
+                        <option value="beginner">Beginner (0-2 years)</option>
+                        <option value="intermediate">Intermediate (3-10 years)</option>
+                        <option value="experienced">Experienced (10+ years)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="farmType">Type of Farming</label>
+                    <select id="farmType" name="farmType" required>
+                        <option value="">Select farming type</option>
+                        <option value="crop">Crop Farming</option>
+                        <option value="livestock">Livestock</option>
+                        <option value="mixed">Mixed Farming</option>
+                        <option value="organic">Organic Farming</option>
+                        <option value="hydroponics">Hydroponics</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location (City, State/Country)</label>
+                    <input type="text" id="location" name="location" required>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-seedling"></i> Create Account
+                </button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem;">
+                Already have an account? <a href="signin.html" style="color: var(--secondary-green);">Sign In</a>
+            </p>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
