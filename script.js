@@ -31,20 +31,181 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 })
 
-// Form validation and submission
+// Update the signup form handler to send data to Python backend
+document.addEventListener("DOMContentLoaded", () => {
+  // Signup form
+  const signupForm = document.getElementById("signupForm")
+  if (signupForm) {
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault()
+
+      if (validateForm("signupForm")) {
+        // Show loading state
+        const submitButton = signupForm.querySelector('button[type="submit"]')
+        const originalText = submitButton.innerHTML
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...'
+        submitButton.disabled = true
+
+        try {
+          // Get form data
+          const formData = new FormData(signupForm)
+
+          // Convert FormData to URLSearchParams for proper encoding
+          const params = new URLSearchParams()
+          for (const [key, value] of formData.entries()) {
+            params.append(key, value)
+          }
+
+          // Send POST request to Python backend
+          const response = await fetch("/signup", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: params.toString(),
+          })
+
+          const result = await response.json()
+
+          if (result.success) {
+            showNotification("Account created successfully! Welcome to FarmConnect!", "success")
+
+            // Store user data for immediate login
+            localStorage.setItem("currentUser", JSON.stringify(result.user))
+
+            // Redirect to forum after short delay
+            setTimeout(() => {
+              window.location.href = "forum.html"
+            }, 2000)
+          } else {
+            showNotification(result.message || "Failed to create account. Please try again.", "error")
+          }
+        } catch (error) {
+          console.error("Signup error:", error)
+          showNotification("Connection error. Please check your internet connection and try again.", "error")
+        } finally {
+          // Reset button state
+          submitButton.innerHTML = originalText
+          submitButton.disabled = false
+        }
+      }
+    })
+  }
+
+  // Signin form (keep existing functionality)
+  const signinForm = document.getElementById("signinForm")
+  if (signinForm) {
+    signinForm.addEventListener("submit", async (e) => {
+      e.preventDefault()
+      if (validateForm("signinForm")) {
+        const submitButton = signinForm.querySelector('button[type="submit"]')
+        const originalText = submitButton.innerHTML
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...'
+        submitButton.disabled = true
+
+        try {
+          // Get form data
+          const formData = new FormData(signinForm)
+          const email = formData.get("email")
+          const password = formData.get("password")
+
+          // Send POST request to Python backend
+          const response = await fetch("/signin", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              email: email,
+              password: password,
+            }),
+          })
+
+          const result = await response.json()
+
+          if (result.success) {
+            // Store user data in localStorage for session management
+            localStorage.setItem("currentUser", JSON.stringify(result.user))
+            showNotification("Welcome back! Redirecting to dashboard...", "success")
+
+            // Redirect to dashboard or forum
+            setTimeout(() => {
+              window.location.href = "forum.html"
+            }, 1500)
+          } else {
+            showNotification(result.message, "error")
+          }
+        } catch (error) {
+          console.error("Sign-in error:", error)
+          showNotification("Connection error. Please try again.", "error")
+        } finally {
+          // Reset button state
+          submitButton.innerHTML = originalText
+          submitButton.disabled = false
+        }
+      }
+    })
+  }
+})
+
+// Enhanced form validation with better error messaging
 function validateForm(formId) {
   const form = document.getElementById(formId)
   if (!form) return false
 
   const inputs = form.querySelectorAll("input[required], select[required], textarea[required]")
   let isValid = true
+  let firstErrorField = null
+
+  // Clear previous error states
+  inputs.forEach((input) => {
+    input.style.borderColor = "#e0e0e0"
+    const errorMsg = input.parentNode.querySelector(".error-message")
+    if (errorMsg) {
+      errorMsg.remove()
+    }
+  })
 
   inputs.forEach((input) => {
+    let fieldValid = true
+    let errorMessage = ""
+
     if (!input.value.trim()) {
-      input.style.borderColor = "#e74c3c"
-      isValid = false
+      fieldValid = false
+      errorMessage = `${input.labels[0]?.textContent || "This field"} is required`
     } else {
-      input.style.borderColor = "#e0e0e0"
+      // Specific validation rules
+      switch (input.type) {
+        case "email":
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+          if (!emailRegex.test(input.value)) {
+            fieldValid = false
+            errorMessage = "Please enter a valid email address"
+          }
+          break
+        case "password":
+          if (input.value.length < 6) {
+            fieldValid = false
+            errorMessage = "Password must be at least 6 characters long"
+          }
+          break
+      }
+    }
+
+    if (!fieldValid) {
+      input.style.borderColor = "#e74c3c"
+
+      // Add error message
+      const errorDiv = document.createElement("div")
+      errorDiv.className = "error-message"
+      errorDiv.style.cssText = "color: #e74c3c; font-size: 0.8rem; margin-top: 0.25rem;"
+      errorDiv.textContent = errorMessage
+      input.parentNode.appendChild(errorDiv)
+
+      if (!firstErrorField) {
+        firstErrorField = input
+      }
+      isValid = false
     }
   })
 
@@ -55,44 +216,27 @@ function validateForm(formId) {
 
     if (password && confirmPassword && password.value !== confirmPassword.value) {
       confirmPassword.style.borderColor = "#e74c3c"
-      alert("Passwords do not match!")
+
+      const errorDiv = document.createElement("div")
+      errorDiv.className = "error-message"
+      errorDiv.style.cssText = "color: #e74c3c; font-size: 0.8rem; margin-top: 0.25rem;"
+      errorDiv.textContent = "Passwords do not match"
+      confirmPassword.parentNode.appendChild(errorDiv)
+
       isValid = false
+      if (!firstErrorField) {
+        firstErrorField = confirmPassword
+      }
     }
+  }
+
+  // Focus on first error field
+  if (firstErrorField) {
+    firstErrorField.focus()
   }
 
   return isValid
 }
-
-// Handle form submissions
-document.addEventListener("DOMContentLoaded", () => {
-  // Signup form
-  const signupForm = document.getElementById("signupForm")
-  if (signupForm) {
-    signupForm.addEventListener("submit", (e) => {
-      e.preventDefault()
-      if (validateForm("signupForm")) {
-        // Simulate form submission
-        alert("Account created successfully! Please check your email for verification.")
-        // In a real application, you would send this data to your Python backend
-        console.log("Signup data:", new FormData(signupForm))
-      }
-    })
-  }
-
-  // Signin form
-  const signinForm = document.getElementById("signinForm")
-  if (signinForm) {
-    signinForm.addEventListener("submit", (e) => {
-      e.preventDefault()
-      if (validateForm("signinForm")) {
-        // Simulate form submission
-        alert("Welcome back! Redirecting to dashboard...")
-        // In a real application, you would authenticate with your Python backend
-        console.log("Signin data:", new FormData(signinForm))
-      }
-    })
-  }
-})
 
 // Forum functionality
 function showNewPostForm() {
@@ -132,29 +276,71 @@ function searchPosts(query) {
   console.log("Searching for:", query)
 }
 
-// Notification system (placeholder)
+// Enhanced notification system with different types
 function showNotification(message, type = "info") {
   const notification = document.createElement("div")
   notification.className = `notification ${type}`
-  notification.textContent = message
+
+  // Set icon based on type
+  let icon = "fas fa-info-circle"
+  let bgColor = "var(--secondary-green)"
+
+  switch (type) {
+    case "success":
+      icon = "fas fa-check-circle"
+      bgColor = "#28a745"
+      break
+    case "error":
+      icon = "fas fa-exclamation-circle"
+      bgColor = "#dc3545"
+      break
+    case "warning":
+      icon = "fas fa-exclamation-triangle"
+      bgColor = "#ffc107"
+      break
+  }
+
+  notification.innerHTML = `
+    <i class="${icon}" style="margin-right: 0.5rem;"></i>
+    ${message}
+  `
+
   notification.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        background: var(--secondary-green);
-        color: white;
-        padding: 1rem;
-        border-radius: 5px;
-        box-shadow: var(--shadow);
-        z-index: 1001;
-        animation: slideIn 0.3s ease;
-    `
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: ${bgColor};
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 5px;
+    box-shadow: var(--shadow);
+    z-index: 1001;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+    word-wrap: break-word;
+  `
 
   document.body.appendChild(notification)
 
+  // Auto remove after 5 seconds
   setTimeout(() => {
-    notification.remove()
-  }, 3000)
+    notification.style.animation = "slideOut 0.3s ease"
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove()
+      }
+    }, 300)
+  }, 5000)
+
+  // Click to dismiss
+  notification.addEventListener("click", () => {
+    notification.style.animation = "slideOut 0.3s ease"
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove()
+      }
+    }, 300)
+  })
 }
 
 // Add CSS animation for notifications
@@ -170,7 +356,24 @@ style.textContent = `
             opacity: 1;
         }
     }
-`
+  `
+
+// Add slideOut animation
+const existingStyle = document.querySelector("style")
+if (existingStyle) {
+  existingStyle.textContent += `
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+  `
+}
 document.head.appendChild(style)
 
 // Simulate real-time updates (placeholder)
@@ -188,4 +391,16 @@ function simulateRealTimeUpdates() {
 // Initialize real-time updates if on forum page
 if (window.location.pathname.includes("forum.html")) {
   simulateRealTimeUpdates()
+}
+
+// Add function to check if user is logged in
+function getCurrentUser() {
+  const userData = localStorage.getItem("currentUser")
+  return userData ? JSON.parse(userData) : null
+}
+
+// Add function to logout
+function logout() {
+  localStorage.removeItem("currentUser")
+  window.location.href = "index.html"
 }
