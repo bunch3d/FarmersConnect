@@ -11,7 +11,7 @@ class PostgreSQLFarmConnectManager:
                  host: str = "localhost", 
                  database: str = "farmconnect", 
                  user: str = "postgres", 
-                 password: str = "kish10",
+                 password: str = "password",
                  port: int = 5432):
         """Initialize PostgreSQL connection"""
         self.connection_params = {
@@ -361,3 +361,69 @@ class PostgreSQLFarmConnectManager:
                 
         except Exception as e:
             return {"success": False, "message": f"Error fetching stats: {str(e)}"}
+    
+    def get_trending_posts(self) -> Dict:
+        """Get trending posts"""
+        try:
+            query = "SELECT * FROM trending_posts"
+            posts = self.execute_query(query)
+            return {"success": True, "posts": posts}
+        except Exception as e:
+            return {"success": False, "message": f"Error fetching trending posts: {str(e)}"}
+
+# Example usage and testing
+if __name__ == "__main__":
+    # Initialize database manager
+    db = PostgreSQLFarmConnectManager()
+    
+    try:
+        print("🧪 Testing PostgreSQL FarmConnect Database...")
+        print("=" * 50)
+        
+        # Test authentication
+        print("\n🔐 Testing Authentication:")
+        auth_result = db.authenticate_user("john.davis@email.com", "password123")
+        if auth_result['success']:
+            user = auth_result['user']
+            print(f"✅ Authenticated: {user['full_name']} ({user['farming_experience']})")
+            
+            # Test dashboard stats
+            print(f"\n📊 Dashboard Stats for {user['full_name']}:")
+            stats = db.get_user_dashboard_stats(user['id'])
+            if stats['success']:
+                user_stats = stats['stats']
+                print(f"Posts: {user_stats['total_posts']}")
+                print(f"Comments: {user_stats['total_comments']}")
+                print(f"Likes Received: {user_stats['total_likes_received']}")
+                print(f"Active Mentorships: {user_stats['active_mentorships_as_mentor']}")
+        
+        # Test post search
+        print(f"\n🔍 Testing Full-Text Search:")
+        search_results = db.search_posts("organic farming")
+        if search_results['success']:
+            print(f"Found {len(search_results['posts'])} posts matching 'organic farming'")
+            for post in search_results['posts'][:3]:
+                print(f"- {post['title']} (Rank: {post['rank']:.3f})")
+        
+        # Test trending posts
+        print(f"\n📈 Trending Posts:")
+        trending = db.get_trending_posts()
+        if trending['success']:
+            for post in trending['posts'][:5]:
+                print(f"- {post['title']} (Score: {post['engagement_score']:.1f})")
+        
+        # Test mentors
+        print(f"\n👨‍🌾 Available Mentors:")
+        mentors = db.get_available_mentors()
+        if mentors['success']:
+            for mentor in mentors['mentors'][:3]:
+                rating = mentor['average_rating'] or 0
+                print(f"- {mentor['full_name']} ({mentor['farm_type']}) - Rating: {rating:.1f}")
+        
+        print(f"\n✅ All tests completed successfully!")
+        
+    except Exception as e:
+        print(f"❌ Test failed: {e}")
+    
+    finally:
+        db.disconnect()
