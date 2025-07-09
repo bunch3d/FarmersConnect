@@ -49,7 +49,6 @@ class UserManager:
         ''', (email, password_hash))
         
         user = cursor.fetchone()
-       
         
         if user:
             return {
@@ -66,9 +65,8 @@ class UserManager:
             }
         else:
             return {"success": False, "message": "Invalid email or password!"}
-         conn.close()
-
-         
+        conn.close()
+        
     def get_user_profile(self, user_id):
         """Get user profile information"""
         conn = sqlite3.connect(self.db_path)
