@@ -12,7 +12,7 @@ class UserManager:
     
     def create_user(self, full_name, email, password, farming_experience, farm_type, location):
         """Create a new user account"""
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect("self.db_path") #self.db_path
         cursor = conn.cursor()
         
         try:
@@ -49,7 +49,7 @@ class UserManager:
         ''', (email, password_hash))
         
         user = cursor.fetchone()
-        
+        conn.close()
         if user:
             return {
                 "success": True,
@@ -66,7 +66,7 @@ class UserManager:
         else:
             return {"success": False, "message": "Invalid email or password!"}
         conn.close()
-        
+
     def get_user_profile(self, user_id):
         """Get user profile information"""
         conn = sqlite3.connect(self.db_path)
