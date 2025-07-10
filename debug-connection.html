@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Debug - FarmConnect</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .debug-container {
+            max-width: 800px;
+            margin: 120px auto 50px;
+            padding: 2rem;
+            background: var(--text-light);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+        .debug-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+        }
+        .debug-result {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        .status-online { background: #28a745; }
+        .status-offline { background: #dc3545; }
+        .status-unknown { background: #ffc107; }
+        .test-button {
+            background: var(--secondary-green);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+        .test-button:hover {
+            background: var(--primary-green);
+        }
+        .test-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="logo">
+                    <i class="fas fa-seedling"></i>
+                    <span>FarmConnect Debug</span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="signup.html">Sign Up</a></li>
+                    <li><a href="signin.html">Sign In</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="debug-container">
+            <h1><i class="fas fa-bug"></i> Connection Debug Tool</h1>
+            <p>Use this tool to diagnose connection issues with the FarmConnect server.</p>
+
+            <!-- Server Status -->
+            <div class="debug-section">
+                <h3><i class="fas fa-server"></i> Server Status</h3>
+                <p>
+                    <span class="status-indicator status-unknown" id="serverStatus"></span>
+                    <span id="serverStatusText">Checking...</span>
+                </p>
+                <button class="test-button" onclick="checkServerStatus()">
+                    <i class="fas fa-sync"></i> Check Server
+                </button>
+            </div>
+
+            <!-- Connection Tests -->
+            <div class="debug-section">
+                <h3><i class="fas fa-network-wired"></i> Connection Tests</h3>
+                <button class="test-button" onclick="runBasicConnectivity()">
+                    <i class="fas fa-wifi"></i> Basic Connectivity
+                </button>
+                <button class="test-button" onclick="testCORS()">
+                    <i class="fas fa-shield-alt"></i> CORS Test
+                </button>
+                <button class="test-button" onclick="testPOST()">
+                    <i class="fas fa-paper-plane"></i> POST Test
+                </button>
+                <button class="test-button" onclick="runFullDiagnostics()">
+                    <i class="fas fa-stethoscope"></i> Full Diagnostics
+                </button>
+                <div class="debug-result" id="testResults">Click a test button to see results...</div>
+            </div>
+
+            <!-- Form Test -->
+            <div class="debug-section">
+                <h3><i class="fas fa-clipboard-check"></i> Form Submission Test</h3>
+                <form id="testForm">
+                    <div class="form-group">
+                        <label for="testEmail">Test Email:</label>
+                        <input type="email" id="testEmail" name="email" value="test@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="testPassword">Test Password:</label>
+                        <input type="password" id="testPassword" name="password" value="testpass123" required>
+                    </div>
+                    <button type="button" class="test-button" onclick="testFormSubmission()">
+                        <i class="fas fa-paper-plane"></i> Test Form Submission
+                    </button>
+                </form>
+                <div class="debug-result" id="formResults">Form test results will appear here...</div>
+            </div>
+
+            <!-- Browser Info -->
+            <div class="debug-section">
+                <h3><i class="fas fa-info-circle"></i> Browser Information</h3>
+                <div class="debug-result" id="browserInfo">Loading browser info...</div>
+            </div>
+
+            <!-- Quick Fixes -->
+            <div class="debug-section">
+                <h3><i class="fas fa-wrench"></i> Quick Fixes</h3>
+                <div style="margin-bottom: 1rem;">
+                    <h4>Common Solutions:</h4>
+                    <ul>
+                        <li><strong>Server not running:</strong> Run <code>python scripts/fix_user_creation_server.py</code></li>
+                        <li><strong>Wrong port:</strong> Make sure server is on port 8000</li>
+                        <li><strong>CORS issues:</strong> Server should include CORS headers</li>
+                        <li><strong>Database missing:</strong> Run <code>python scripts/debug_user_creation.py</code></li>
+                    </ul>
+                </div>
+                <button class="test-button" onclick="showQuickFixes()">
+                    <i class="fas fa-magic"></i> Show Detailed Fixes
+                </button>
+                <div class="debug-result" id="quickFixes" style="display: none;"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script-fixed.js"></script>
+    <script>
+        // Debug page specific functions
+        let debugResults = {};
+
+        async function checkServerStatus() {
+            const statusIndicator = document.getElementById('serverStatus');
+            const statusText = document.getElementById('serverStatusText');
+            
+            statusIndicator.className = 'status-indicator status-unknown';
+            statusText.textContent = 'Checking...';
+            
+            try {
+                const response = await fetch('http://localhost:8000/debug/db-info', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = `Server Online (${response.status})`;
+                } else {
+                    statusIndicator.className = 'status-indicator status-offline';
+                    statusText.textContent = `Server Error (${response.status})`;
+                }
+            } catch (error) {
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = `Server Offline - ${error.message}`;
+            }
+        }
+
+        async function runBasicConnectivity() {
+            const results = document.getElementById('testResults');
+            results.textContent = 'Testing basic connectivity...';
+            
+            try {
+                const start = Date.now();
+                const response = await fetch('http://localhost:8000/debug/db-info');
+                const duration = Date.now() - start;
+                
+                const result = {
+                    success: true,
+                    status: response.status,
+                    statusText: response.statusText,
+                    duration: `${duration}ms`,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+                
+                results.textContent = JSON.stringify(result, null, 2);
+                debugResults.basicConnectivity = result;
+            } catch (error) {
+                const result = {
+                    success: false,
+                    error: error.message,
+                    type: error.name
+                };
+                results.textContent = JSON.stringify(result, null, 2);
+                debugResults.basicConnectivity = result;
+            }
+        }
+
+        async function testCORS() {
+            const results = document.getElementById('testResults');
+            results.textContent = 'Testing CORS headers...';
+            
+            try {
+                const response = await fetch('http://localhost:8000/debug/db-info', {
+                    method: 'OPTIONS'
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+                };
+                
+                const result = {
+                    success: true,
+                    status: response.status,
+                    corsHeaders: corsHeaders,
+                    allHeaders: Object.fromEntries(response.headers.entries())
+                };
+                
+                results.textContent = JSON.stringify(result, null, 2);
+                debugResults.cors = result;
+            } catch (error) {
+                const result = {
+                    success: false,
+                    error: error.message
+                };
+                results.textContent = JSON.stringify(result, null, 2);
+                debugResults.cors = result;
+            }
+        }
+
+        async function testPOST() {
+            const results = document.getElementById('testResults');
+            results.textContent = 'Testing POST request...';
+            
+            try {
+                const formData = new URLSearchParams();
+                formData.append('test', 'debug');
+                
+                const response = await fetch('http://localhost:8000/debug/test-db', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                const result = {
+                    success: true,
+                    status: response.status,
+                    data: data
+                };
+                
+                results.textContent = JSON.stringify(result, null, 2);
+                debugResults.post = result;
+            } catch (error) {
+                const result = {
+                    success: false,
+                    error: error.message
+                };
+                results.textContent = JSON.stringify(result, null, 2);
+                debugResults.post = result;
+            }
+        }
+
+        async function runFullDiagnostics() {
+            const results = document.getElementById('testResults');
+            results.textContent = 'Running full diagnostics...';
+            
+            try {
+                const diagnostics = await window.farmConnectDebug.runDiagnostics();
+                results.textContent = JSON.stringify(diagnostics, null, 2);
+                debugResults.full = diagnostics;
+            } catch (error) {
+                results.textContent = `Diagnostics failed: ${error.message}`;
+            }
+        }
+
+        async function testFormSubmission() {
+            const results = document.getElementById('formResults');
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            
+            results.textContent = 'Testing form submission...';
+            
+            try {
+                const formData = new URLSearchParams();
+                formData.append('email', email);
+                formData.append('password', password);
+                
+                const response = await fetch('http://localhost:8000/signin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                const result = {
+                    success: response.ok,
+                    status: response.status,
+                    data: data
+                };
+                
+                results.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                results.textContent = `Form submission failed: ${error.message}`;
+            }
+        }
+
+        function showQuickFixes() {
+            const fixesDiv = document.getElementById('quickFixes');
+            fixesDiv.style.display = 'block';
+            
+            const fixes = `
+DETAILED TROUBLESHOOTING GUIDE:
+
+1. SERVER NOT RUNNING:
+   - Open terminal/command prompt
+   - Navigate to your project directory
+   - Run: python scripts/fix_user_creation_server.py
+   - Look for "Server running on port 8000"
+
+2. WRONG PORT OR URL:
+   - Check if server is running on http://localhost:8000
+   - Try visiting http://localhost:8000/debug/db-info in browser
+   - If different port, update CONFIG.SERVER_URL in script-fixed.js
+
+3. DATABASE ISSUES:
+   - Run: python scripts/debug_user_creation.py
+   - This will check and fix database structure
+   - Look for "Database and tables created successfully"
+
+4. CORS ERRORS:
+   - Server should send Access-Control-Allow-Origin: *
+   - Check server console for CORS-related errors
+   - Restart server if CORS headers are missing
+
+5. FIREWALL/ANTIVIRUS:
+   - Check if firewall is blocking port 8000
+   - Temporarily disable antivirus to test
+   - Add Python to firewall exceptions
+
+6. BROWSER ISSUES:
+   - Clear browser cache and cookies
+   - Try in incognito/private mode
+   - Check browser console for JavaScript errors
+   - Try different browser
+
+7. NETWORK ISSUES:
+   - Check if you're connected to internet
+   - Try: ping localhost
+   - Check if other local servers work
+
+8. PYTHON/SERVER ISSUES:
+   - Make sure Python is installed: python --version
+   - Install required packages: pip install requests
+   - Check server logs for error messages
+
+Current Debug Results:
+${JSON.stringify(debugResults, null, 2)}
+            `;
+            
+            fixesDiv.textContent = fixes;
+        }
+
+        function loadBrowserInfo() {
+            const browserInfo = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                url: window.location.href,
+                timestamp: new Date().toISOString(),
+                screen: {
+                    width: screen.width,
+                    height: screen.height
+                },
+                viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                }
+            };
+            
+            document.getElementById('browserInfo').textContent = JSON.stringify(browserInfo, null, 2);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBrowserInfo();
+            checkServerStatus();
+        });
+    </script>
+</body>
+</html>
